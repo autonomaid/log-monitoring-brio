@@ -1,0 +1,125 @@
+#folder yang dipake "sensor logger otomatis"
+
+file .sh adalah untuk melakukan auto running pada program .py
+file .sh dan .py yang akan dijalankan harus satu folder
+
+
+cara menjalankan sensor auto run adalah dengan mengcopy program dibawah
+
+#buka terminal atau vsCode
+
+cd ~/Documents/'logger otomatis sensor + PCAN' 
+
+which python3
+python3 -c "import pyzed.sl, usb.core, can, cv2; print('semua ok')"
+
+#cek can aktif atau tidak
+ip -details link show can0
+
+#cara mengaktifkan can
+sudo ip link set can0 down
+sudo ip link set can0 type can bitrate 500000 listen-only on
+sudo ip link set can0 up
+
+# uji semua sensor, 30 detik (bisa di skip)
+python3 fusion.py --duration 30
+
+#uji PCAN
+PEAKCAN_CHANNEL=can0 python3 fusion.py --sensors peakcan --duration 20
+
+# uji tanpa sensor asli (data buatan, hasil di folder sim_output)
+python3 fusion.py --simulate 10
+
+
+##untuk menjaankan program
+# (a) cara biasa
+sudo bash install_autostart.sh
+
+# (b) pakai python3 yang sedang aktif (disarankan jika memakai conda)
+sudo PYTHON=$(which python3) bash install_autostart.sh
+
+# (c) jalan sebagai root
+sudo RUN_AS=root bash install_autostart.sh
+
+# (d) can0 diaktifkan otomatis saat boot (isi bitrate mobil)
+sudo PEAKCAN_BITRATE=500000 PYTHON=$(which python3) bash install_autostart.sh
+
+# (e) can0
+sudo PEAKCAN_CHANNEL=can0 PEAKCAN_BITRATE=500000 
+sudo ./install_autostart.sh
+
+
+#tunggu 20 detik setelah dijalankan
+systemctl status fusion-logger (jika ada tanda "active" muncul berarti program berjalan)
+
+#untuk melihat log yang berjalan
+journalctl -u fusion-logger -f
+
+#restart ulang jetson
+sudo reboot
+
+#setelah satu menit jalankan program dibawah
+systemctl status fusion-logger (jika ada tanda "active" muncul berarti program berjalan)
+
+
+
+
+cara mengehentikan program sensor auto run adalah dengan mengcopy program dibawah
+
+#buka terminal atau vsCode
+
+cd ~/Documents/'logger otomatis sensor + PCAN' 
+
+sudo systemctl stop fusion-logger
+
+sudo bash install_autostart.sh remove
+
+
+
+
+##kendala & solusi##
+
+##kendala 1
+
+#jika setelah menjalankan program
+
+systemctl status fusion-logger 
+
+#ada kendala saat dijalankan maka hapus programnya menggunakan 
+
+sudo bash install_autostart.sh remove 
+
+#lalu jalankan
+
+sudo PYTHON=$(which python3) bash install_autostart.sh
+
+#setelah program dijalankan dan berhasil lanjutkan programnya setelah satu menit
+
+systemctl status fusion-logger
+
+
+##kendala 2
+
+#jika setelah menjalankan program lalu ingin keluar dari program yang berjalan tersebeut maka setelah control+c tidak ada base atau seperti alamat yang biasa terlihat maka lakukan control+c lagi
+#biasanya harus 2x control+c untuk kembali ke alamat awal
+
+
+##kendala 3
+
+#kalo sensor dicabut saat program dijalankan maka program akan mengalami error jika hal tersebut terjadi maka restart ulang jetson agar program dapat berjalan kembali setelah dinyalakan
+
+
+
+
+
+
+sudo ip link set can0 down
+sudo ip link set can0 type can bitrate 500000 listen-only on
+sudo ip link set can0 up
+ip -details -statistics link show can0
+
+
+
+
+cd "/home/autonoma/Documents/logger otomatis sensor + PCAN"
+PEAKCAN_CHANNEL=can0 python3 fusion.py --sensors peakcan
